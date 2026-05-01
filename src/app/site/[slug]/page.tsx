@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation'
 
 export default async function SitePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const decodedSlug = decodeURIComponent(slug)
   await connectDB()
-  const restaurant = await Restaurant.findOne({ slug }).lean() as any
+  const restaurant = await Restaurant.findOne({ slug: decodedSlug }).lean() as any
 
   if (!restaurant) notFound()
 
