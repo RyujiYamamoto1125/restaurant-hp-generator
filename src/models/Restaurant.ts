@@ -20,6 +20,7 @@ export interface IRestaurant extends Document {
   uploadedHeroImg: string       // オーナーがアップロードしたヒーロー画像
   uploadedMenuImgs: string[]    // オーナーがアップロードしたメニュー画像
   uploadedGalleryImgs: string[] // オーナーがアップロードしたギャラリー画像
+  status: 'demo' | 'active' | 'inactive'
   contentJson: string
   metaJson: string
   generatedHtml: string
@@ -46,6 +47,7 @@ const RestaurantSchema = new Schema<IRestaurant>({
   uploadedHeroImg:      { type: String, default: '' },
   uploadedMenuImgs:     { type: [String], default: [] },
   uploadedGalleryImgs:  { type: [String], default: [] },
+  status:           { type: String, enum: ['demo', 'active', 'inactive'], default: 'demo', index: true },
   contentJson:      String,
   metaJson:         String,
   generatedHtml:    { type: String, required: true },
