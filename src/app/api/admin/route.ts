@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { connectDB } from '@/lib/mongodb'
-import Restaurant from '@/models/Restaurant'
+import { listRestaurants, getRestaurant, saveRestaurant } from '@/lib/githubdb'
 
 function checkAdmin(req: NextRequest) {
   const key = req.headers.get('x-admin-key') || req.nextUrl.searchParams.get('adminKey') || ''
-  const adminKey = process.env.ADMIN_KEY
-  return adminKey && key === adminKey
+  return process.env.ADMIN_KEY && key === process.env.ADMIN_KEY
 }
 
 export async function GET(req: NextRequest) {
   try {
     if (!checkAdmin(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-    await connectDB()
-    const list = await Restaurant.find({}, {
-      slug:1, name:1, cuisine:1, status:1, createdAt:1, phone:1, address:1
-    }).sort({ createdAt: -1 }).lean()
-    return NextResponse.json(list)
+    const list = await listRestaurants()
+    return NextResponse.json(list.map(r => ({
+      slug: r.slug, name: r.name, cuisine: r.cuisine,
+      status: r.status, createdAt: r.createdAt, phone: r.phone, address: r.address,
+    })))
   } catch (e) {
-    console.error('GET /admin:', e)
+    console.error('GET admin:', e)
     return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 })
   }
 }
@@ -30,12 +28,12 @@ export async function PATCH(req: NextRequest) {
     if (!slug || !['demo', 'active', 'inactive'].includes(status)) {
       return NextResponse.json({ error: 'invalid parameters' }, { status: 400 })
     }
-    await connectDB()
-    const r = await Restaurant.findOneAndUpdate({ slug }, { status }, { new: true })
+    const r = await getRestaurant(slug)
     if (!r) return NextResponse.json({ error: 'not found' }, { status: 404 })
-    return NextResponse.json({ ok: true, slug: r.slug, status: r.status })
+    await saveRestaurant(slug, { ...r, status })
+    return NextResponse.json({ ok: true, slug, status })
   } catch (e) {
-    console.error('PATCH /admin:', e)
+    console.error('PATCH admin:', e)
     return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 })
   }
 }
